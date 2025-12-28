@@ -13,6 +13,8 @@ MiniMe is an identity-conditioned LLM orchestration system that combines persona
 
 ### Installation
 
+#### Option 1: Using requirements.txt (Recommended for beginners)
+
 ```bash
 # Clone the repository
 git clone <repo-url>
@@ -20,10 +22,46 @@ cd minime
 
 # Create virtual environment
 python3.11 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
 
 # Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# For development (includes testing/linting tools):
+pip install -r requirements-dev.txt
+```
+
+#### Option 2: Using pyproject.toml (Modern Python packaging)
+
+```bash
+# Clone the repository
+git clone <repo-url>
+cd minime
+
+# Create virtual environment
+python3.11 -m venv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
+
+# Install in editable mode with dev dependencies
 pip install -e ".[dev]"
+```
+
+#### Option 3: Using Makefile
+
+```bash
+# Create venv and install everything
+make install
 ```
 
 ### Initialize MiniMe
