@@ -345,6 +345,22 @@ class MiniMeConfig(BaseModel):
     allowlisted_commands: List[str] = Field(default_factory=lambda: ["git status", "git log", "ls", "pwd"])
     auto_approve_safe: bool = True  # auto-execute safe actions
     low_risk_auto_delay_sec: float = 2.0  # delay before auto-executing low-risk actions
+    # AI Memory (Auto-Generated Notes)
+    ai_memory_path: str = "ai-memory"  # Subfolder for auto-generated notes
+    auto_generate_notes: bool = True  # Whether to auto-generate notes after tasks
+    note_generation_provider: str = "mock"  # "mock" | "ollama" | "openai" | "anthropic"
+    # Local vs API Configuration
+    use_local_embeddings: bool = True  # Always use local (sentence-transformers)
+    use_local_llm_for_notes: bool = False  # Use local LLM (Ollama) for note generation
+    local_llm_model: str = "llama3"  # Model name for Ollama
+    local_llm_url: str = "http://localhost:11434"  # Ollama API URL
+    # Similarity Search Configuration
+    similarity_threshold: float = 0.7  # Threshold for similarity proposals
+    auto_approve_confidence: float = 0.9  # Auto-approve proposals above this confidence
+    max_similarity_proposals: int = 10  # Max proposals per note
+    # Chunking Configuration
+    chunk_max_tokens: int = 512  # Max tokens per chunk
+    chunk_overlap: int = 128  # Overlap between chunks
 
     @classmethod
     def load_from_file(cls, path: str) -> "MiniMeConfig":
