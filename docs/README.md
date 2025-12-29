@@ -40,6 +40,34 @@ Welcome to the MiniMe documentation! This folder contains detailed explanations 
    - How principles are stored and used
    - **How MiniMe personalizes responses**
 
+6. **[EXPLANATION_MEMORY_DATABASE.md](EXPLANATION_MEMORY_DATABASE.md)** - Database Layer
+   - `minime/memory/db.py` - AsyncDatabase class
+   - Database schema (4 tables)
+   - Node, chunk, edge operations
+   - Similarity search support
+   - **The storage layer for all memory data**
+
+7. **[EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md)** - Vault Indexer
+   - `minime/memory/vault.py` - VaultIndexer class
+   - How Obsidian vaults are indexed
+   - Metadata extraction (wikilinks, tags, frontmatter)
+   - Graph edge creation (explicit + similarity)
+   - **The ingestion layer that processes your vault**
+
+8. **[EXPLANATION_CHUNKING.md](EXPLANATION_CHUNKING.md)** - Note Chunking
+   - `minime/memory/chunk.py` - chunk_note() function
+   - Why and how notes are split into chunks
+   - Overlapping chunk strategy
+   - Sentence boundary preservation
+   - **How long notes are made searchable**
+
+9. **[EXPLANATION_NOTE_SUMMARIZER.md](EXPLANATION_NOTE_SUMMARIZER.md)** - Note Summarizer
+   - `minime/memory/summarizer.py` - NoteSummarizer class
+   - Auto-generating notes from AI conversations
+   - LLM vs template-based generation
+   - Auto-indexing of generated notes
+   - **How MiniMe builds persistent memory**
+
 ## 🎯 Quick Start Guide
 
 ### If you're new to ML:
@@ -50,7 +78,11 @@ Welcome to the MiniMe documentation! This folder contains detailed explanations 
 1. Start with **[EXPLANATION_SCHEMAS.md](EXPLANATION_SCHEMAS.md)** (data structures)
 2. Then **[EXPLANATION_CONFIG.md](EXPLANATION_CONFIG.md)** (configuration)
 3. Then **[EXPLANATION_IDENTITY.md](EXPLANATION_IDENTITY.md)** (identity layer)
-4. Finally **[EXPLANATION_EMBEDDINGS.md](EXPLANATION_EMBEDDINGS.md)** (ML implementation)
+4. Then **[EXPLANATION_EMBEDDINGS.md](EXPLANATION_EMBEDDINGS.md)** (ML implementation)
+5. Then **[EXPLANATION_MEMORY_DATABASE.md](EXPLANATION_MEMORY_DATABASE.md)** (storage layer)
+6. Then **[EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md)** (vault indexing)
+7. Then **[EXPLANATION_CHUNKING.md](EXPLANATION_CHUNKING.md)** (chunking strategy)
+8. Finally **[EXPLANATION_NOTE_SUMMARIZER.md](EXPLANATION_NOTE_SUMMARIZER.md)** (auto-generated notes)
 
 ### If you want to understand a specific file:
 - Check the corresponding `EXPLANATION_*.md` file
@@ -85,6 +117,18 @@ Each explanation document follows this structure:
 ### Want to understand personalization?
 → **[EXPLANATION_IDENTITY.md](EXPLANATION_IDENTITY.md)**
 
+### Want to understand memory storage?
+→ **[EXPLANATION_MEMORY_DATABASE.md](EXPLANATION_MEMORY_DATABASE.md)**
+
+### Want to understand vault indexing?
+→ **[EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md)**
+
+### Want to understand note chunking?
+→ **[EXPLANATION_CHUNKING.md](EXPLANATION_CHUNKING.md)**
+
+### Want to understand auto-generated notes?
+→ **[EXPLANATION_NOTE_SUMMARIZER.md](EXPLANATION_NOTE_SUMMARIZER.md)**
+
 ## 💡 Tips for Reading
 
 1. **Start with concepts** - Understanding ML concepts makes the code easier
@@ -100,6 +144,10 @@ After reading these documents, you should understand:
 - ✅ How configuration works
 - ✅ How identity principles are stored and used
 - ✅ How embeddings enable similarity search
+- ✅ How the database stores vault data
+- ✅ How Obsidian vaults are indexed and processed
+- ✅ How notes are chunked for better retrieval
+- ✅ How AI conversations become persistent memory
 
 Happy learning! 🎓
 

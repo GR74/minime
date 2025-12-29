@@ -183,17 +183,19 @@ vector = embedding_model.encode_single(text)
 # Stores vector in IdentityPrinciple.vector
 ```
 
-### 2. Vault Note Indexing (Future)
+### 2. Vault Note Indexing
 
 When indexing Obsidian notes:
 
 ```python
-# In minime/memory/vault.py (future implementation)
+# In minime/memory/vault.py
 embedding_model = EmbeddingModel()
-note_content = "My thoughts on architecture..."
+chunks = chunk_note(note_content)  # Split into chunks
 chunk_embeddings = embedding_model.encode(chunks)  # Batch encode all chunks
-# Stores embeddings in database
+# Stores embeddings in database via AsyncDatabase.insert_chunk()
 ```
+
+**See also:** [EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md) for details on vault indexing.
 
 ### 3. Semantic Search (Future)
 
@@ -209,6 +211,21 @@ for note_embedding in stored_embeddings:
     similarity = cosine_similarity(query_embedding, note_embedding)
     if similarity > threshold:
         # This note is relevant!
+```
+
+### 4. Similarity Proposals
+
+When generating similarity-based graph edges:
+
+```python
+# In minime/memory/vault.py
+new_embedding = embedding_model.encode_single(new_note_chunk)
+existing_embeddings = await db.get_all_node_embeddings()
+
+for node_id, existing_embedding in existing_embeddings:
+    similarity = cosine_similarity(new_embedding, existing_embedding)
+    if similarity > 0.7:
+        # Create similarity proposal!
 ```
 
 ---
