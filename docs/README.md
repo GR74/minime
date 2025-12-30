@@ -1,6 +1,6 @@
 # MiniMe Documentation
 
-Welcome to the MiniMe documentation! This directory contains comprehensive documentation for all components, scripts, concepts, and architecture of the MiniMe memory system.
+Welcome to the MiniMe documentation! This directory contains comprehensive documentation for all components, scripts, concepts, and architecture of MiniMe - an identity-conditioned LLM orchestration system.
 
 ## 📁 Directory Structure
 
@@ -104,15 +104,23 @@ Historical documentation:
 
 For a complete overview of all documentation, see **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**.
 
-## 🏗️ Memory System Overview
+## 🏗️ System Overview
 
-The current memory system is developed with below capabilities:
-- **Indexes** notes from Obsidian vault
+MiniMe is an identity-conditioned LLM orchestration system that combines personal identity principles, memory from Obsidian vaults, and multi-agent orchestration to create a personalized AI assistant.
+
+**Current Implementation (Memory Layer)**:
+- **Indexes** notes from Obsidian vaults
 - **Embeds** text using sentence transformers
 - **Searches** semantically using FAISS
 - **Connects** notes via graph edges
 - **Visualizes** knowledge graphs
 - **Generates** notes from conversations
+
+**Planned Features**:
+- Identity principle system with hierarchical masks
+- Multi-agent orchestration (architect, builder, critic, etc.)
+- Task classification and routing
+- Context-aware retrieval with identity weighting
 
 For detailed architecture, see **[architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)**.
 

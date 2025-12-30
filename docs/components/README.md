@@ -1,6 +1,6 @@
 # Component Documentation
 
-This directory contains detailed documentation for each core component of the MiniMe memory system.
+This directory contains detailed documentation for each core component of MiniMe - an identity-conditioned LLM orchestration system that combines personal identity principles, memory from Obsidian vaults, and multi-agent orchestration.
 
 ## 📋 Components Overview
 

@@ -1,6 +1,6 @@
 # Scripts Documentation
 
-This directory contains documentation for all scripts, utilities, demos, and testing tools in the MiniMe project.
+This directory contains documentation for all scripts, utilities, demos, and testing tools in MiniMe - an identity-conditioned LLM orchestration system.
 
 ## 📋 Scripts Overview
 

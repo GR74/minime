@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document describes the architecture of the MiniMe memory system, showing how all components interact and communicate with each other.
+MiniMe is an identity-conditioned LLM orchestration system that combines personal identity principles, memory from Obsidian vaults, and multi-agent orchestration to create a personalized AI assistant.
+
+This document describes the architecture of the MiniMe system, showing how all components interact and communicate with each other. The current implementation focuses on the memory layer foundation, with plans for identity conditioning and multi-agent orchestration.
 
 ## System Architecture Diagram
 

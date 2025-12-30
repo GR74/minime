@@ -2,6 +2,8 @@
 
 ## Overview
 
+MiniMe is an identity-conditioned LLM orchestration system that combines personal identity principles, memory from Obsidian vaults, and multi-agent orchestration to create a personalized AI assistant.
+
 This document provides a complete summary of all documentation in the MiniMe project, organized by category for easy navigation.
 
 ## 📁 Documentation Structure
