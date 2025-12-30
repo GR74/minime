@@ -1,153 +1,136 @@
 # MiniMe Documentation
 
-Welcome to the MiniMe documentation! This folder contains detailed explanations of the codebase, organized by topic.
+Welcome to the MiniMe documentation! This directory contains comprehensive documentation for all components, scripts, concepts, and architecture of the MiniMe memory system.
 
-## 📚 Documentation Index
+## 📁 Directory Structure
 
-### Core Concepts
+```
+docs/
+├── README.md (this file)
+├── DOCUMENTATION_SUMMARY.md
+│
+├── components/          # Core component documentation
+│   ├── README.md
+│   └── EXPLANATION_*.md (10 component files)
+│
+├── scripts/             # Script documentation
+│   ├── SCRIPTS_README.md
+│   └── SCRIPTS_*.md (4 script category files)
+│
+├── concepts/            # ML concepts and theory
+│   └── ML_CONCEPTS.md
+│
+├── architecture/        # System architecture
+│   └── ARCHITECTURE.md
+│
+└── archive/            # Historical documentation
+    └── day-1-2/         # Original documentation files
+```
 
-1. **[ML_CONCEPTS.md](ML_CONCEPTS.md)** - Machine Learning Concepts
-   - What is Machine Learning?
-   - Text Embeddings explained
-   - Vector Similarity
-   - Sentence Transformers
-   - How MiniMe uses ML concepts
-   - **Start here if you're new to ML!**
+## 🚀 Quick Start
 
-### File Explanations
+### For Developers
+1. Start with **[ARCHITECTURE.md](architecture/ARCHITECTURE.md)** to understand the system design
+2. Browse **[components/](components/)** to learn about individual components
+3. Check **[scripts/](scripts/)** for available tools and utilities
 
-2. **[EXPLANATION_SCHEMAS.md](EXPLANATION_SCHEMAS.md)** - `minime/schemas.py`
-   - All Pydantic data models
-   - Identity, Memory, Agent, Tool schemas
-   - How data validation works
-   - **The foundation of all data structures**
+### For ML/AI Enthusiasts
+1. Read **[ML_CONCEPTS.md](concepts/ML_CONCEPTS.md)** for ML theory
+2. Explore **[components/EXPLANATION_EMBEDDINGS_MODEL.md](components/EXPLANATION_EMBEDDINGS_MODEL.md)** for embedding details
+3. Review **[components/EXPLANATION_FAISS.md](components/EXPLANATION_FAISS.md)** for vector search
 
-3. **[EXPLANATION_CONFIG.md](EXPLANATION_CONFIG.md)** - `minime/config.py`
-   - Configuration loading
-   - Default values
-   - YAML file structure
-   - **How the system is configured**
+### For Users
+1. Check **[scripts/SCRIPTS_README.md](scripts/SCRIPTS_README.md)** for available scripts
+2. Read **[scripts/SCRIPTS_DEMO.md](scripts/SCRIPTS_DEMO.md)** for demo examples
+3. Explore **[scripts/SCRIPTS_UTILITIES.md](scripts/SCRIPTS_UTILITIES.md)** for utility tools
 
-4. **[EXPLANATION_EMBEDDINGS.md](EXPLANATION_EMBEDDINGS.md)** - `minime/memory/embeddings.py`
-   - EmbeddingModel class
-   - How text becomes vectors
-   - Lazy loading pattern
-   - **The ML engine of MiniMe**
+## 📚 Documentation Categories
 
-5. **[EXPLANATION_IDENTITY.md](EXPLANATION_IDENTITY.md)** - Identity Layer
-   - `minime/identity/principles.py` - IdentityManager
-   - `minime/identity/loader.py` - Loading from YAML
-   - How principles are stored and used
-   - **How MiniMe personalizes responses**
+### Components (`components/`)
+Detailed documentation for each core component:
+- **Session Management**: `EXPLANATION_SESSION.md`
+- **Database Layer**: `EXPLANATION_DATABASE.md`
+- **Chunking Strategy**: `EXPLANATION_CHUNK.md`
+- **Embeddings**: `EXPLANATION_EMBEDDINGS_MODEL.md`
+- **Vector Search**: `EXPLANATION_FAISS.md`
+- **Search Engine**: `EXPLANATION_SEARCH.md`
+- **Graph Operations**: `EXPLANATION_GRAPH_SERVICE.md`
+- **Note Summarization**: `EXPLANATION_SUMMARIZER.md`
+- **Visualization**: `EXPLANATION_VISUALIZER.md`
+- **Metadata Utils**: `EXPLANATION_EMBEDDING_UTILS.md`
 
-6. **[EXPLANATION_MEMORY_DATABASE.md](EXPLANATION_MEMORY_DATABASE.md)** - Database Layer
-   - `minime/memory/db.py` - AsyncDatabase class
-   - Database schema (4 tables)
-   - Node, chunk, edge operations
-   - Similarity search support
-   - **The storage layer for all memory data**
+### Scripts (`scripts/`)
+Documentation for all scripts and utilities:
+- **Testing Scripts**: `SCRIPTS_TESTING.md`
+- **Demo Scripts**: `SCRIPTS_DEMO.md`
+- **Visualization Tools**: `SCRIPTS_VISUALIZATION.md`
+- **Utilities**: `SCRIPTS_UTILITIES.md`
+- **Overview**: `SCRIPTS_README.md`
 
-7. **[EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md)** - Vault Indexer
-   - `minime/memory/vault.py` - VaultIndexer class
-   - How Obsidian vaults are indexed
-   - Metadata extraction (wikilinks, tags, frontmatter)
-   - Graph edge creation (explicit + similarity)
-   - **The ingestion layer that processes your vault**
+### Concepts (`concepts/`)
+Machine learning concepts explained:
+- **ML_CONCEPTS.md**: Comprehensive guide to all ML concepts used in MiniMe
 
-8. **[EXPLANATION_CHUNKING.md](EXPLANATION_CHUNKING.md)** - Note Chunking
-   - `minime/memory/chunk.py` - chunk_note() function
-   - Why and how notes are split into chunks
-   - Overlapping chunk strategy
-   - Sentence boundary preservation
-   - **How long notes are made searchable**
+### Architecture (`architecture/`)
+System design and flow:
+- **ARCHITECTURE.md**: Complete system architecture, data flows, and component communication
 
-9. **[EXPLANATION_NOTE_SUMMARIZER.md](EXPLANATION_NOTE_SUMMARIZER.md)** - Note Summarizer
-   - `minime/memory/summarizer.py` - NoteSummarizer class
-   - Auto-generating notes from AI conversations
-   - LLM vs template-based generation
-   - Auto-indexing of generated notes
-   - **How MiniMe builds persistent memory**
-
-## 🎯 Quick Start Guide
-
-### If you're new to ML:
-1. Read **[ML_CONCEPTS.md](ML_CONCEPTS.md)** first
-2. Then read **[EXPLANATION_EMBEDDINGS.md](EXPLANATION_EMBEDDINGS.md)**
-
-### If you want to understand the code structure:
-1. Start with **[EXPLANATION_SCHEMAS.md](EXPLANATION_SCHEMAS.md)** (data structures)
-2. Then **[EXPLANATION_CONFIG.md](EXPLANATION_CONFIG.md)** (configuration)
-3. Then **[EXPLANATION_IDENTITY.md](EXPLANATION_IDENTITY.md)** (identity layer)
-4. Then **[EXPLANATION_EMBEDDINGS.md](EXPLANATION_EMBEDDINGS.md)** (ML implementation)
-5. Then **[EXPLANATION_MEMORY_DATABASE.md](EXPLANATION_MEMORY_DATABASE.md)** (storage layer)
-6. Then **[EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md)** (vault indexing)
-7. Then **[EXPLANATION_CHUNKING.md](EXPLANATION_CHUNKING.md)** (chunking strategy)
-8. Finally **[EXPLANATION_NOTE_SUMMARIZER.md](EXPLANATION_NOTE_SUMMARIZER.md)** (auto-generated notes)
-
-### If you want to understand a specific file:
-- Check the corresponding `EXPLANATION_*.md` file
-- Each file has detailed explanations, examples, and code flow
-
-## 📖 Document Structure
-
-Each explanation document follows this structure:
-
-1. **Overview** - What the file/module does
-2. **File Structure** - High-level organization
-3. **Detailed Explanation** - Line-by-line or function-by-function
-4. **Examples** - Code examples showing usage
-5. **Integration** - How it works with other modules
-6. **Key Concepts** - Important ideas explained
-7. **Summary** - Takeaways
+### Archive (`archive/`)
+Historical documentation:
+- **day-1-2/**: Original documentation from early development
 
 ## 🔍 Finding Information
 
-### Looking for ML concepts?
-→ **[ML_CONCEPTS.md](ML_CONCEPTS.md)**
+### By Topic
+- **Embeddings**: `components/EXPLANATION_EMBEDDINGS_MODEL.md`, `concepts/ML_CONCEPTS.md`
+- **Search**: `components/EXPLANATION_SEARCH.md`, `components/EXPLANATION_FAISS.md`
+- **Graph**: `components/EXPLANATION_GRAPH_SERVICE.md`, `components/EXPLANATION_VISUALIZER.md`
+- **Database**: `components/EXPLANATION_DATABASE.md`, `components/EXPLANATION_SESSION.md`
+- **Testing**: `scripts/SCRIPTS_TESTING.md`
 
-### Want to understand data structures?
-→ **[EXPLANATION_SCHEMAS.md](EXPLANATION_SCHEMAS.md)**
+### By Component
+- **Session**: `components/EXPLANATION_SESSION.md`
+- **Database**: `components/EXPLANATION_DATABASE.md`
+- **Chunking**: `components/EXPLANATION_CHUNK.md`
+- **Embeddings**: `components/EXPLANATION_EMBEDDINGS_MODEL.md`
+- **FAISS**: `components/EXPLANATION_FAISS.md`
+- **Search**: `components/EXPLANATION_SEARCH.md`
+- **Graph**: `components/EXPLANATION_GRAPH_SERVICE.md`
+- **Summarizer**: `components/EXPLANATION_SUMMARIZER.md`
+- **Visualizer**: `components/EXPLANATION_VISUALIZER.md`
+- **Utils**: `components/EXPLANATION_EMBEDDING_UTILS.md`
 
-### Need to configure the system?
-→ **[EXPLANATION_CONFIG.md](EXPLANATION_CONFIG.md)**
+## 📖 Documentation Summary
 
-### Curious about embeddings?
-→ **[EXPLANATION_EMBEDDINGS.md](EXPLANATION_EMBEDDINGS.md)**
+For a complete overview of all documentation, see **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**.
 
-### Want to understand personalization?
-→ **[EXPLANATION_IDENTITY.md](EXPLANATION_IDENTITY.md)**
+## 🏗️ System Overview
 
-### Want to understand memory storage?
-→ **[EXPLANATION_MEMORY_DATABASE.md](EXPLANATION_MEMORY_DATABASE.md)**
+MiniMe is a memory system for AI agents that:
+- **Indexes** notes from Obsidian vaults
+- **Embeds** text using sentence transformers
+- **Searches** semantically using FAISS
+- **Connects** notes via graph edges
+- **Visualizes** knowledge graphs
+- **Generates** notes from conversations
 
-### Want to understand vault indexing?
-→ **[EXPLANATION_VAULT_INDEXER.md](EXPLANATION_VAULT_INDEXER.md)**
+For detailed architecture, see **[architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)**.
 
-### Want to understand note chunking?
-→ **[EXPLANATION_CHUNKING.md](EXPLANATION_CHUNKING.md)**
+## 🔗 Related Documentation
 
-### Want to understand auto-generated notes?
-→ **[EXPLANATION_NOTE_SUMMARIZER.md](EXPLANATION_NOTE_SUMMARIZER.md)**
+- **Main README**: `../README.md` (project root)
+- **Setup Guide**: `../SETUP.md`
+- **Testing Guide**: `../TESTING.md`
 
-## 💡 Tips for Reading
+## 📝 Contributing
 
-1. **Start with concepts** - Understanding ML concepts makes the code easier
-2. **Read in order** - The documents build on each other
-3. **Try the examples** - Code examples help solidify understanding
-4. **Check integration sections** - Shows how pieces fit together
+When adding new documentation:
+1. Place component docs in `components/`
+2. Place script docs in `scripts/`
+3. Update relevant README files
+4. Update `DOCUMENTATION_SUMMARY.md` if needed
 
-## 🚀 Next Steps
+---
 
-After reading these documents, you should understand:
-- ✅ How MiniMe uses ML for semantic understanding
-- ✅ How data is structured and validated
-- ✅ How configuration works
-- ✅ How identity principles are stored and used
-- ✅ How embeddings enable similarity search
-- ✅ How the database stores vault data
-- ✅ How Obsidian vaults are indexed and processed
-- ✅ How notes are chunked for better retrieval
-- ✅ How AI conversations become persistent memory
-
-Happy learning! 🎓
+**Last Updated**: Documentation organized by category for easy navigation.
 

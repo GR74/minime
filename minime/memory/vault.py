@@ -7,22 +7,27 @@ from pathlib import Path
 from typing import List, Optional
 
 import frontmatter
-import numpy as np
 
 from minime.memory.chunk import chunk_note
 from minime.memory.db import AsyncDatabase
 from minime.memory.embeddings import EmbeddingModel
-from minime.schemas import GraphEdge, MemoryChunk, VaultNode
+from minime.memory.graph import GraphService
+from minime.schemas import MemoryChunk, VaultNode
 
 
 class VaultIndexer:
-    """Indexes Obsidian vault, extracts metadata, computes embeddings, creates graph edges."""
+    """
+    Indexes Obsidian vault: file I/O, parsing, chunking, embedding.
+    
+    Graph operations are delegated to GraphService to maintain single responsibility.
+    """
 
     def __init__(
         self,
         vault_path: str,
         db: AsyncDatabase,
         embedding_model: EmbeddingModel,
+        graph_service: GraphService = None,
     ):
         """
         Initialize VaultIndexer.
@@ -31,10 +36,12 @@ class VaultIndexer:
             vault_path: Path to Obsidian vault directory
             db: AsyncDatabase instance
             embedding_model: EmbeddingModel instance for computing embeddings
+            graph_service: Optional GraphService instance (created if not provided)
         """
         self.vault_path = Path(vault_path).expanduser()
         self.db = db
         self.embedding_model = embedding_model
+        self.graph_service = graph_service or GraphService(db, embedding_model)
 
     async def index(self) -> List[VaultNode]:
         """
@@ -104,6 +111,29 @@ class VaultIndexer:
         relative_path = str(file_path.relative_to(self.vault_path))
         node_id = hashlib.md5(relative_path.encode()).hexdigest()
 
+        # FIX #4: Compute content hash for deduplication
+        content_hash = hashlib.sha256(body.encode()).hexdigest()
+        
+        # Check if node exists and if content has changed
+        existing_node = await self.db.get_node(node_id)
+        if existing_node:
+            # Check if we need to re-embed (content changed)
+            existing_chunks = await self.db.get_chunks_for_node(node_id)
+            if existing_chunks and existing_chunks[0].metadata:
+                # Get stored hash from metadata if available
+                stored_hash = existing_chunks[0].metadata.get("content_hash")
+                if stored_hash == content_hash:
+                    # Content unchanged, skip re-embedding
+                    # Update metadata in case it changed (title, tags, etc.)
+                    existing_node.updated_at = datetime.now()
+                    existing_node.title = title
+                    existing_node.tags = tags
+                    existing_node.domain = domain
+                    existing_node.links = links
+                    existing_node.frontmatter = frontmatter_data
+                    await self.db.insert_node(existing_node)
+                    return existing_node  # Return existing node without re-processing
+
         # Create VaultNode
         node = VaultNode(
             node_id=node_id,
@@ -115,7 +145,7 @@ class VaultIndexer:
             scope=scope,
             links=links,
             backlinks=[],  # Will be computed later
-            created_at=datetime.now(),
+            created_at=existing_node.created_at if existing_node else datetime.now(),
             updated_at=datetime.now(),
             embedding_ref=None,  # Will be set after chunking
         )
@@ -128,36 +158,162 @@ class VaultIndexer:
             await self.db.insert_node(node)
             return node
 
-        # Compute embeddings for chunks
-        embeddings = self.embedding_model.encode(chunks, show_progress_bar=False)
-
-        # Store chunks
+        # FIX #4: Check chunk-level hashes to skip re-embedding unchanged chunks
+        import time
+        existing_chunks = await self.db.get_chunks_for_node(node_id)
+        existing_chunk_map = {chunk.chunk_id: chunk for chunk in existing_chunks}
+        
+        chunks_to_embed = []
+        chunks_to_store = []
+        embeddings = []  # Initialize to avoid NameError when all chunks unchanged
         primary_chunk_id = None
-        for idx, (chunk_text, embedding) in enumerate(zip(chunks, embeddings)):
+        embedding_meta = self.embedding_model.get_embedding_metadata()
+        
+        for idx, chunk_text in enumerate(chunks):
             chunk_id = f"{node_id}_chunk_{idx}"
+            
+            # Compute chunk-level content hash
+            chunk_hash = hashlib.sha256(chunk_text.encode()).hexdigest()
+            
+            # Check if chunk exists and is unchanged
+            existing_chunk = existing_chunk_map.get(chunk_id)
+            if existing_chunk and existing_chunk.metadata:
+                stored_chunk_hash = existing_chunk.metadata.get("chunk_hash")
+                stored_note_hash = existing_chunk.metadata.get("content_hash")
+                
+                # Skip if both chunk and note content unchanged
+                if stored_chunk_hash == chunk_hash and stored_note_hash == content_hash:
+                    if primary_chunk_id is None:
+                        primary_chunk_id = chunk_id
+                    chunks_to_store.append(existing_chunk)  # Reuse existing chunk
+                    continue
+            
+            # Need to re-embed this chunk
             if primary_chunk_id is None:
                 primary_chunk_id = chunk_id
+            chunks_to_embed.append((idx, chunk_text, chunk_id, chunk_hash))
 
-            chunk = MemoryChunk(
-                chunk_id=chunk_id,
-                node_id=node_id,
-                content=chunk_text,
-                embedding=embedding,
-                metadata={"chunk_index": idx, "total_chunks": len(chunks)},
-                position=idx,
-            )
+        # Compute embeddings only for changed chunks
+        if chunks_to_embed:
+            chunk_texts = [chunk_text for _, chunk_text, _, _ in chunks_to_embed]
+            embeddings = self.embedding_model.encode(chunk_texts, show_progress_bar=False)
+            
+            for (idx, chunk_text, chunk_id, chunk_hash), embedding in zip(chunks_to_embed, embeddings):
+                # FIX #2: Enforce consistent embedding metadata schema
+                # IMPORTANT: Build embedding metadata with all required fields BEFORE validation
+                # #region agent log
+                import json
+                try:
+                    with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "B", "location": "vault.py:_process_file", "message": "Building chunk metadata", "data": {"chunk_id": chunk_id, "embedding_meta_keys": list(embedding_meta.keys()) if embedding_meta else None, "embedding_dim": len(embedding)}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+                except: pass
+                # #endregion
+                
+                chunk_metadata = {
+                    "chunk_index": idx,
+                    "total_chunks": len(chunks),
+                    "chunk_hash": chunk_hash,  # Chunk-level hash
+                    "content_hash": content_hash,  # Note-level hash
+                    "embedding": {
+                        **embedding_meta,  # provider, model, revision, encoder_sha
+                        "dim": len(embedding),  # Must be added before validation
+                        "ts": time.time(),  # Must be added before validation
+                    }
+                }
+                # #region agent log
+                try:
+                    with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        embed_meta_keys = list(chunk_metadata["embedding"].keys()) if "embedding" in chunk_metadata else []
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "B", "location": "vault.py:_process_file", "message": "Metadata built, validating", "data": {"embedding_keys": embed_meta_keys, "has_dim": "dim" in chunk_metadata.get("embedding", {}), "has_ts": "ts" in chunk_metadata.get("embedding", {})}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+                except: pass
+                # #endregion
+                # Validate metadata schema (after all fields are set)
+                from minime.memory.embedding_utils import validate_embedding_metadata
+                try:
+                    validate_embedding_metadata(chunk_metadata)
+                    # #region agent log
+                    try:
+                        with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "B", "location": "vault.py:_process_file", "message": "Metadata validation passed", "data": {}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+                    except: pass
+                    # #endregion
+                except Exception as e:
+                    # #region agent log
+                    try:
+                        with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "B", "location": "vault.py:_process_file", "message": "Metadata validation failed", "data": {"exception_type": type(e).__name__, "exception_msg": str(e)}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+                    except: pass
+                    # #endregion
+                    raise
 
-            await self.db.insert_chunk(chunk)
+                chunk = MemoryChunk(
+                    chunk_id=chunk_id,
+                    node_id=node_id,
+                    content=chunk_text,
+                    embedding=embedding,
+                    metadata=chunk_metadata,
+                    position=idx,
+                )
+
+                await self.db.insert_chunk(chunk)
+                chunks_to_store.append(chunk)
+        else:
+            # All chunks unchanged, update metadata if needed (e.g., timestamp)
+            for chunk in chunks_to_store:
+                if chunk.metadata.get("content_hash") != content_hash:
+                    # Update note-level hash if changed
+                    chunk.metadata["content_hash"] = content_hash
+                    await self.db.insert_chunk(chunk)
 
         # Update node with primary chunk reference
         node.embedding_ref = primary_chunk_id
         await self.db.insert_node(node)
 
+        # Delegate graph operations to GraphService
         # Create explicit edges (wikilinks)
-        await self._create_wikilink_edges(node, links)
+        await self.graph_service.create_wikilink_edges(node)
 
         # Generate similarity proposals
-        await self._generate_similarity_proposals(node, embeddings[0] if embeddings else None)
+        # Use primary chunk embedding (either newly computed or from existing chunk)
+        primary_embedding = None
+        # #region agent log
+        import json
+        try:
+            with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "C", "location": "vault.py:_process_file", "message": "Getting primary embedding", "data": {"has_embeddings": len(embeddings) > 0, "has_chunks_to_store": len(chunks_to_store) > 0, "primary_chunk_id": primary_chunk_id}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+        except: pass
+        # #endregion
+        
+        if embeddings:
+            primary_embedding = embeddings[0]
+            # #region agent log
+            try:
+                with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "C", "location": "vault.py:_process_file", "message": "Using new embedding", "data": {"embedding_dim": len(primary_embedding) if primary_embedding else 0}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+            except: pass
+            # #endregion
+        elif chunks_to_store and primary_chunk_id:
+            # All chunks unchanged, get embedding from existing primary chunk
+            primary_chunk = next((c for c in chunks_to_store if c.chunk_id == primary_chunk_id), None)
+            # #region agent log
+            try:
+                with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "C", "location": "vault.py:_process_file", "message": "Looking for existing primary chunk", "data": {"found_chunk": primary_chunk is not None, "chunk_has_embedding": primary_chunk.embedding is not None if primary_chunk else False}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+            except: pass
+            # #endregion
+            if primary_chunk:
+                primary_embedding = primary_chunk.embedding
+                # #region agent log
+                try:
+                    with open(r'c:\Users\gowri\minime\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "check1", "hypothesisId": "C", "location": "vault.py:_process_file", "message": "Using existing chunk embedding", "data": {"embedding_dim": len(primary_embedding) if primary_embedding else 0}, "timestamp": int(datetime.now().timestamp() * 1000)}) + '\n')
+                except: pass
+                # #endregion
+        
+        await self.graph_service.generate_similarity_proposals(
+            node,
+            primary_embedding,
+        )
 
         return node
 
@@ -227,119 +383,4 @@ class VaultIndexer:
         # Remove duplicates and normalize
         return list(set(tag.lower().strip() for tag in tags if tag))
 
-    async def _create_wikilink_edges(self, node: VaultNode, links: List[str]) -> None:
-        """
-        Create explicit edges for wikilinks.
-
-        Args:
-            node: Source node
-            links: List of wikilink targets
-        """
-        for link_target in links:
-            # Try to find target node by path or title
-            # For MVP, we'll create edge if target exists
-            # In future, could do fuzzy matching
-
-            # Generate potential node_id from link (simple hash for now)
-            # This is a heuristic - in production, might need better matching
-            target_node_id = hashlib.md5(link_target.lower().encode()).hexdigest()
-
-            # Check if target node exists (by checking if any node has this as title/path)
-            # For MVP, we'll create the edge anyway and let it be resolved later
-            edge_id = f"{node.node_id}_{target_node_id}_wikilink"
-
-            edge = GraphEdge(
-                edge_id=edge_id,
-                source_node_id=node.node_id,
-                target_node_id=target_node_id,  # May not exist yet
-                edge_type="wikilink",
-                weight=1.0,
-                rationale=f"Explicit wikilink: [[{link_target}]]",
-                confidence=1.0,
-                is_approved=True,
-                created_at=datetime.now(),
-                approved_at=datetime.now(),
-            )
-
-            await self.db.insert_edge(edge)
-
-    def _compute_similarity(self, embedding1: List[float], embedding2: List[float]) -> float:
-        """
-        Compute cosine similarity between two embeddings.
-
-        Args:
-            embedding1: First embedding vector
-            embedding2: Second embedding vector
-
-        Returns:
-            Cosine similarity score (0.0 to 1.0)
-        """
-        if not embedding1 or not embedding2:
-            return 0.0
-
-        vec1 = np.array(embedding1)
-        vec2 = np.array(embedding2)
-
-        # Cosine similarity: dot product / (norm1 * norm2)
-        dot_product = np.dot(vec1, vec2)
-        norm1 = np.linalg.norm(vec1)
-        norm2 = np.linalg.norm(vec2)
-
-        if norm1 == 0 or norm2 == 0:
-            return 0.0
-
-        similarity = dot_product / (norm1 * norm2)
-        return float(similarity)
-
-    async def _generate_similarity_proposals(
-        self, node: VaultNode, embedding: Optional[List[float]], threshold: float = 0.7
-    ) -> None:
-        """
-        Generate similarity-based edge proposals.
-
-        Args:
-            node: Current node being indexed
-            embedding: Primary embedding for the node
-            threshold: Similarity threshold for proposals (default: 0.7)
-        """
-        if not embedding:
-            return
-
-        # Get all existing node embeddings
-        existing_embeddings = await self.db.get_all_node_embeddings()
-
-        proposals_created = 0
-        max_proposals = 10  # Limit proposals per node
-
-        for other_node_id, other_embedding in existing_embeddings:
-            # Skip self
-            if other_node_id == node.node_id:
-                continue
-
-            # Compute similarity
-            similarity = self._compute_similarity(embedding, other_embedding)
-
-            if similarity > threshold:
-                # Create proposal
-                edge_id = f"{node.node_id}_{other_node_id}_similar"
-                confidence = similarity
-
-                proposal = GraphEdge(
-                    edge_id=edge_id,
-                    source_node_id=node.node_id,
-                    target_node_id=other_node_id,
-                    edge_type="similar",
-                    weight=similarity,
-                    rationale=f"Semantic similarity: {similarity:.3f}",
-                    confidence=confidence,
-                    is_approved=False,  # Proposals need approval
-                    created_at=datetime.now(),
-                    approved_at=None,
-                )
-
-                await self.db.insert_proposal(proposal)
-                proposals_created += 1
-
-                if proposals_created >= max_proposals:
-                    break
 
