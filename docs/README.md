@@ -104,10 +104,10 @@ Historical documentation:
 
 For a complete overview of all documentation, see **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**.
 
-## 🏗️ System Overview
+## 🏗️ Memory System Overview
 
-MiniMe is a memory system for AI agents that:
-- **Indexes** notes from Obsidian vaults
+The current memory system is developed with below capabilities:
+- **Indexes** notes from Obsidian vault
 - **Embeds** text using sentence transformers
 - **Searches** semantically using FAISS
 - **Connects** notes via graph edges
